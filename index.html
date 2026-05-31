@@ -1,0 +1,262 @@
+﻿<!DOCTYPE html><html><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mantenimiento Auto</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d0d0d;color:#e0e0e0;font-family:Arial,sans-serif;font-size:14px;padding:10px}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px}
+.topbar h3{color:#4CAF50;font-size:16px}
+.tabs{display:flex;gap:0;margin-bottom:10px}
+.tab{padding:6px 18px;cursor:pointer;background:#1a1a1a;border:1px solid #333;color:#888;font-size:13px}
+.tab.active{background:#1e3a5f;color:#fff;font-weight:bold;border-bottom-color:#1e3a5f}
+.panel{display:none}.panel.active{display:block}
+button{font-size:12px;padding:4px 9px;background:#222;color:#fff;border:1px solid #444;cursor:pointer;border-radius:3px}
+select,input[type=text],input[type=number],input[type=date]{font-size:12px;padding:4px;background:#111;color:#fff;border:1px solid #444;border-radius:3px}
+.alt-wrap{overflow-x:auto}
+.alt-table{border-collapse:collapse;margin-top:6px;table-layout:auto;white-space:nowrap}
+.alt-table th{background:#1F3864;color:#fff;padding:5px 8px;font-size:11px;text-align:center;white-space:nowrap}
+.alt-table th:first-child{text-align:left}
+.alt-table td{padding:5px 8px;border-bottom:1px solid #222;font-size:12px;vertical-align:middle;text-align:right;white-space:nowrap}
+.alt-table td:first-child{text-align:left;padding-right:16px}
+.alt-table td:nth-child(3),.alt-table td:nth-child(7),.alt-table td:nth-child(9){text-align:center}
+.alt-table tr:nth-child(even) td{background:#111}
+.st-ok{background:#1B3A1B;color:#66BB6A;font-weight:bold;padding:1px 7px;border-radius:3px;white-space:nowrap;font-size:11px}
+.st-proximo{background:#3A2A00;color:#FFA726;font-weight:bold;padding:1px 7px;border-radius:3px;white-space:nowrap;font-size:11px}
+.st-vencido{background:#3A0A0A;color:#EF5350;font-weight:bold;padding:1px 7px;border-radius:3px;white-space:nowrap;font-size:11px}
+.st-sin{background:#222;color:#888;padding:1px 7px;border-radius:3px;white-space:nowrap;font-size:11px}
+.neg{color:#EF5350!important}
+.editable{border-bottom:1px dashed #555;cursor:text;display:inline-block;min-width:20px;outline:none}
+.editando{background:#221100!important;outline:1px solid #FFC107!important;color:#FFC107!important;border-radius:2px}
+.mod-star{color:#FFC107;font-size:10px;margin-left:2px}
+.hist-controls{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center}
+.hist-table{width:100%;border-collapse:collapse}
+.hist-table th{background:#1F3864;color:#fff;padding:6px 5px;font-size:11px;text-align:left}
+.hist-table td{padding:5px 4px;border-bottom:1px solid #222;font-size:12px;vertical-align:top}
+.hist-table tr:nth-child(even) td{background:#111}
+.badge{display:inline-block;font-size:10px;padding:1px 6px;border-radius:3px;font-weight:bold;white-space:nowrap}
+.c-motor{background:#BBDEFB;color:#0D47A1}.c-suspe{background:#C8E6C9;color:#1B5E20}
+.c-freno{background:#FFCDD2;color:#B71C1C}.c-elec{background:#FFF9C4;color:#856404}
+.c-carrot{background:#F8BBD9;color:#880E4F}.c-caja{background:#D1C4E9;color:#4527A0}.c-otro{background:#424242;color:#eee}
+.add-form{background:#111;border:1px solid #333;border-radius:5px;padding:10px;margin-bottom:12px;display:none}
+.add-form.open{display:block}
+.form-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.form-row input,.form-row select{flex:1;min-width:100px}
+.form-row textarea{width:100%;height:50px;resize:vertical;font-size:12px;background:#111;color:#fff;border:1px solid #444;padding:5px;border-radius:3px}
+.tr-new td{background:#0d1f0d!important}
+#btn-rot{position:fixed;bottom:16px;right:16px;z-index:99999;background:#1e3a5f;color:#fff;border:2px solid #4CAF50;padding:10px 14px;font-size:20px;border-radius:6px;width:auto;line-height:1;touch-action:manipulation}
+@media (orientation:landscape) and (max-width:1024px){
+body{padding:4px}
+.topbar{display:none!important}
+.tabs{display:none!important}
+#panel-hist{display:none!important}
+#panel-alt{display:block!important}
+.alt-wrap{overflow-x:auto;width:100vw;max-height:calc(100vh - 8px);overflow-y:auto}
+.alt-table{width:100%}
+.alt-table th{font-size:9px;padding:3px 5px}
+.alt-table td{font-size:10px;padding:3px 5px}
+.st-ok,.st-proximo,.st-vencido,.st-sin{font-size:9px;padding:1px 4px}
+}
+</style></head><body>
+<div class='topbar'>
+<h3>&#128663; Mantenimiento 31/05/26 &nbsp;&#183;&nbsp; <span style='color:#90CAF9'>205.030 km</span></h3>
+<div style='display:flex;gap:6px;flex-wrap:wrap'>
+<button onclick='exportarJSON()'>Gen Feedback</button>
+<button onclick='resetMods()' style='color:#EF5350;border-color:#5a1a1a'>Reset cambios</button>
+</div></div>
+<div class='tabs'>
+<div class='tab active' id='tab-alt' onclick='showTab("alt")'>Alertas</div>
+<div class='tab' id='tab-hist' onclick='showTab("hist")'>Historial</div>
+</div>
+<div class='panel active' id='panel-alt'>
+<div id='alt-wrap-inner'>
+<div style='color:#90CAF9;font-size:11px;padding:2px 0 4px 0'>&#128663; Mantenimiento 31/05/26 &nbsp;&#183;&nbsp; 205.030 km</div>
+<div class='alt-wrap'><table class='alt-table' id='alt-table'></table></div></div>
+</div>
+<div class='panel' id='panel-hist'>
+<div class='hist-controls'>
+<input type='text' id='buscar' placeholder='Buscar...' oninput='renderHist()' style='max-width:160px'>
+<select id='filtCat' onchange='renderHist()'>
+<option value=''>Todas</option>
+<option>Motor/aceite</option><option>Suspension</option><option>Frenos</option>
+<option>Electrico</option><option>Carroceria</option><option>Caja/transmision</option><option>Otro</option>
+</select>
+<select id='sortDir' onchange='renderHist()'><option value='asc'>Antiguo primero</option><option value='desc'>Reciente primero</option></select>
+<button onclick='toggleAddForm()' style='background:#1B3A1B;color:#66BB6A'>+ Agregar</button>
+</div>
+<div class='add-form' id='add-form'>
+<div class='form-row'>
+<input type='number' id='f-km' placeholder='Km'>
+<input type='date' id='f-fecha'>
+<select id='f-cat'><option>Motor/aceite</option><option>Suspension</option><option>Frenos</option><option>Electrico</option><option>Carroceria</option><option>Caja/transmision</option><option>Otro</option></select>
+</div>
+<div class='form-row'><textarea id='f-desc' placeholder='Descripcion...'></textarea></div>
+<div class='form-row'><textarea id='f-notas' placeholder='Notas (opcional)'></textarea></div>
+<div style='display:flex;gap:8px;justify-content:flex-end'>
+<button onclick='toggleAddForm()'>Cancelar</button>
+<button onclick='agregarRegistro()' style='background:#1B3A1B;color:#66BB6A'>Guardar</button>
+</div></div>
+<table class='hist-table'><thead><tr><th>KM</th><th>Fecha</th><th>Categoria</th><th>Descripcion</th><th>Notas</th></tr></thead>
+<tbody id='hist-body'></tbody></table>
+</div>
+<button id='btn-rot' onclick='toggleRotacion()'>&#8635;</button>
+<script>
+var historial=[{km:110000,f:"06/03/2017",c:"Motor/aceite",d:"Bomba nafta (dueño anterior)",n:""},{km:120000,f:"06/03/2017",c:"Motor/aceite",d:"Cambio Bujias Bosch doble platino + cables Bosch originales",n:""},{km:120000,f:"06/03/2017",c:"Suspension",d:"Pata de caja, bieletas suspension delantera",n:""},{km:120000,f:"06/03/2017",c:"Otro",d:"Cambio filtro cabina",n:""},{km:120000,f:"06/03/2017",c:"Suspension",d:"Cubiertas x4 Dunlop Direzza, alineacion y balanceo (Moreno)",n:""},{km:121000,f:"29/04/2017",c:"Motor/aceite",d:"Cambio aceite y filtro",n:""},{km:122000,f:"",c:"Motor/aceite",d:"Correa poli V y rodamiento (Brasil)",n:""},{km:122000,f:"08/11/2017",c:"Electrico",d:"Bateria Willard 12x75 (+)Der UB740",n:""},{km:122000,f:"08/11/2017",c:"Motor/aceite",d:"Cabmbio radiador + cambio refrigerante",n:""},{km:124000,f:"08/06/2018",c:"Motor/aceite",d:"Cambio aceite y filtro / escobilla derecha",n:""},{km:125000,f:"01/07/2018",c:"Motor/aceite",d:"Cambio filtro nafta",n:""},{km:125000,f:"",c:"Motor/aceite",d:"Filtros y O-Rings inyectores",n:""},{km:125000,f:"",c:"Motor/aceite",d:"Catalizadores deleted (Guille Lujan)",n:""},{km:136000,f:"20/03/2019",c:"Motor/aceite",d:"Cambio aceite y filtro",n:""},{km:148000,f:"01/09/2020",c:"Motor/aceite",d:"Cambio aceite y filtro",n:""},{km:150000,f:"04/07/2021",c:"Suspension",d:"Amortiguadores delanteros Lujan, cazoleta DD Record",n:""},{km:156000,f:"05/11/2021",c:"Electrico",d:"Bateria Willard 12x75 (+)Der UB740",n:"3,9917864476386"},{km:157000,f:"18/05/2022",c:"Motor/aceite",d:"Limpieza filtro aire",n:""},{km:157650,f:"20/06/2022",c:"Suspension",d:"Brazo inf del der IR(Espana), brazo sup BBR, bieletas izq/der BBR, precaps Lemforder, fuelles direccion Lemforder",n:""},{km:157700,f:"22/06/2022",c:"Suspension",d:"Balanceo adelante y alineacion",n:""},{km:158020,f:"26/07/2022",c:"Motor/aceite",d:"Aceite",n:""},{km:158020,f:"01/08/2022",c:"Electrico",d:"Nuevo AHU c/dsp",n:""},{km:160700,f:"01/01/2023",c:"Frenos",d:"Discos delanteros",n:""},{km:160700,f:"01/01/2023",c:"Otro",d:"Cambio filtro cabina ",n:""},{km:160750,f:"",c:"Electrico",d:"Parlantes puertas",n:""},{km:160795,f:"28/01/2023",c:"Frenos",d:"Pastillas freno traseras",n:""},{km:160800,f:"",c:"Carroceria",d:"Amortiguador capo derecho",n:""},{km:160850,f:"",c:"Motor/aceite",d:"Cambio inyectores x6 (refurbished AliExpress)",n:""},{km:160880,f:"",c:"Carroceria",d:"Parrilla frente, escobillas limpiaparabrisas",n:""},{km:161000,f:"",c:"Motor/aceite",d:"Revision nivel caja diferencial (Moreno)",n:""},{km:162000,f:"",c:"Suspension",d:"Cubiertas Michelin Primacy 225/50-17 y 225/45-17, llantas AMG 17x7.5",n:""},{km:169584,f:"30/07/2023",c:"Motor/aceite",d:"Cambio filtro nafta Mann (325gr)",n:""},{km:169584,f:"30/07/2023",c:"Motor/aceite",d:"Cambio aceite y filtro, 1L ATF, Liqui Moly Motorflush, 8 litros",n:""},{km:170000,f:"",c:"Motor/aceite",d:"Sondas O2: banco 1-1 y 1-2 ambos lados",n:""},{km:170900,f:"",c:"Suspension",d:"Amortiguadores traseros originales Mercedes A203 326 10 00 28",n:""},{km:170942,f:"",c:"Motor/aceite",d:"Tensor correa poli V FBI (aleman)",n:""},{km:171000,f:"",c:"Frenos",d:"Pastillas freno delanteras Bosch nacionales + sensores",n:""},{km:171100,f:"",c:"Suspension",d:"Amortiguadores delanteros y espirales (Costa Chica calle 50)",n:""},{km:171320,f:"28/08/2023",c:"Suspension",d:"Alineacion adelante",n:""},{km:172500,f:"",c:"Carroceria",d:"Pintura paragolpes del y tras",n:""},{km:172500,f:"",c:"Carroceria",d:"Mica opticas delanteras",n:""},{km:175730,f:"29/04/2024",c:"Electrico",d:"Bateria Prestolite 12x85 75ah PEV75PD",n:"2,48049281314168"},{km:176500,f:"20/07/2024",c:"Motor/aceite",d:"Juntas tubo admision, tubos toma de aire",n:""},{km:176500,f:"",c:"Carroceria",d:"Centros llanta, tapa sapito, vinilo carbono palanca",n:""},{km:176500,f:"",c:"Otro",d:"Recibido MUX C3 escaneo",n:""},{km:176500,f:"",c:"Electrico",d:"ABS/ESP capacitor sulfatado OK",n:""},{km:177000,f:"01/08/2024",c:"Electrico",d:"Tablero A2035404448 (interno 4348), juntas tapas tanque nafta",n:""},{km:178000,f:"",c:"Motor/aceite",d:"Cambio MAF",n:""},{km:178800,f:"04/11/2024",c:"Motor/aceite",d:"Cambio filtro aire.",n:""},{km:178800,f:"04/11/2024",c:"",d:"Refrigerante Bosch 1L.",n:""},{km:178800,f:"04/11/2024",c:"Otro",d:"YAW sensor. Sensor arbol levas CPS",n:""},{km:178800,f:"04/11/2024",c:"Motor/aceite",d:"Juntas oil cooler x4",n:""},{km:179000,f:"21/11/2024",c:"Motor/aceite",d:"liquido frenos",n:""},{km:179000,f:"21/11/2024",c:"Motor/aceite",d:"limpieza EGR+oil breather, juntas tapa valvulas",n:""},{km:179000,f:"21/11/2024",c:"Motor/aceite",d:"Limpieza inyectores y bujias ultrasonido,",n:""},{km:179000,f:"21/11/2024",c:"Motor/aceite",d:"sensor ciguenial, termostato",n:""},{km:179800,f:"21/11/2024",c:"Motor/aceite",d:"Cambio aceite y filtro Mahle OX153/7D, Gulf Max Ultra Plus 10w40",n:""},{km:179800,f:"",c:"Otro",d:"Direccion: cambio liquido por ATF DIII",n:""},{km:181000,f:"",c:"Motor/aceite",d:"Sensor MAP 0261 230 189",n:""},{km:183400,f:"23/02/2025",c:"Suspension",d:"Brazo inf DI, bujes y bieletas barra trasera, brazo director trasero",n:""},{km:189000,f:"",c:"Suspension",d:"Separadores traseros 15mm, del 10mm",n:""},{km:189852,f:"09/05/2025",c:"Caja/transmision",d:"Cambio aceite caja y filtro Mannol ATF Multiauto",n:"1,05954825462012"},{km:190500,f:"",c:"Motor/aceite",d:"Fuelles direccion",n:""},{km:198000,f:"08/10/2025",c:"Motor/aceite",d:"Cambio aceite y filtro poliester",n:"0,643394934976044"},{km:198500,f:"",c:"Otro",d:"Servo motor y brazo control AA",n:""},{km:198785,f:"19/11/2025",c:"Electrico",d:"Bateria Willard UB740ag",n:"1,55783709787817"},{km:199500,f:"",c:"Suspension",d:"Brazo control sup izq, cazoleta izq",n:""},{km:199600,f:"01/12/2025",c:"Otro",d:"Bujes cremallera direccion 2033330514",n:""},{km:205022,f:"28/05/2026",c:"Carroceria",d:"Cambio filtro cabina Mann CU 3461",n:"PENDIENTE"},{km:205023,f:"01/06/2026",c:"Motor/aceite",d:"Manguera superior radiador / Refri Tot Glacelf Supra amarillo 2 Lts",n:"PENDIENTE"},{km:205024,f:"01/06/2026",c:"Motor/aceite",d:"zCamb Bujias FR8DPP33+  / F ai / F Nanf / F Habit / Acei y F",n:"PENDIENTE"},{km:205025,f:"01/06/2026",c:"Motor/aceite",d:"zCamb aceite y filtro   Gulf Max Ultra Plus 10w40 Mann HU718/5x poliester",n:"PENDIENTE"},{km:205026,f:"01/06/2026",c:"Motor/aceite",d:"zCamb filtro  aire Mann C 3698/3-2",n:"PENDIENTE"},{km:205027,f:"01/06/2026",c:"Motor/aceite",d:"zCamb filtro  Nafta Mann WK720",n:"PENDIENTE"},{km:205028,f:"01/06/2026",c:"Motor/aceite",d:"zCamb Inyectores A1120780149 Bosch 0280156014",n:"PENDIENTE"},{km:205029,f:"01/06/2026",c:"Electrico",d:"bat till today",n:"0,531143052703628"}];
+var alertas=[{row:4,svc:"Cambio Bujias",ultKm:120000,ultF:"06/03/2017",intKm:120000,proxKm:240000,proxF:"06/03/2021",meses:48,estado:"VENCIDO",faltaKm:34970,faltaM:-63,mant:"B",repOk:"OK"},{row:5,svc:"Aceite y filtro motor",ultKm:198000,ultF:"08/10/2025",intKm:12000,proxKm:210000,proxF:"08/10/2026",meses:12,estado:"OK",faltaKm:4970,faltaM:4,mant:"B",repOk:"OK"},{row:6,svc:"Cambio filtro aire",ultKm:178800,ultF:"04/11/2024",intKm:36000,proxKm:214800,proxF:"04/11/2026",meses:24,estado:"OK",faltaKm:9770,faltaM:5,mant:"B",repOk:"OK"},{row:7,svc:"Filtro combustible",ultKm:169584,ultF:"30/07/2023",intKm:48000,proxKm:217584,proxF:"30/07/2027",meses:48,estado:"OK",faltaKm:12554,faltaM:13,mant:"B",repOk:"OK"},{row:8,svc:"Cambio filtro cabina",ultKm:205022,ultF:"28/05/2026",intKm:36000,proxKm:241022,proxF:"28/05/2028",meses:24,estado:"OK",faltaKm:35992,faltaM:23,mant:"B",repOk:"-"},{row:9,svc:"Bateria",ultKm:198785,ultF:"19/11/2025",intKm:48000,proxKm:246785,proxF:"19/11/2027",meses:24,estado:"OK",faltaKm:41755,faltaM:17,mant:"B",repOk:"-"},{row:10,svc:"Cambio aceite caja",ultKm:189852,ultF:"09/05/2025",intKm:60000,proxKm:249852,proxF:"09/05/2030",meses:60,estado:"OK",faltaKm:44822,faltaM:47,mant:"B",repOk:"-"},{row:11,svc:"Liquido de frenos",ultKm:179000,ultF:"21/11/2024",intKm:120000,proxKm:299000,proxF:"21/11/2028",meses:48,estado:"OK",faltaKm:93970,faltaM:29,mant:"B",repOk:"-"},{row:12,svc:"Cambio Refrigerante",ultKm:178800,ultF:"04/11/2024",intKm:240000,proxKm:418800,proxF:"04/11/2039",meses:180,estado:"OK",faltaKm:213770,faltaM:161,mant:"B",repOk:"-"}];
+var htmlVersion='20260531140831';
+function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+function lsSet(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+function lsClear(){try{localStorage.clear();}catch(e){}}
+function showTab(t){
+document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+document.getElementById('panel-'+t).classList.add('active');
+document.getElementById('tab-'+t).classList.add('active');
+}
+function catClass(c){
+return {'Motor/aceite':'c-motor','Suspension':'c-suspe','Frenos':'c-freno',
+'Electrico':'c-elec','Carroceria':'c-carrot','Caja/transmision':'c-caja'}[c]||'c-otro';
+}
+function stClass(e){
+return {VENCIDO:'st-vencido',PROXIMO:'st-proximo',OK:'st-ok'}[e]||'st-sin';
+}
+function selectAll(el){try{let r=document.createRange();r.selectNodeContents(el);let s=window.getSelection();s.removeAllRanges();s.addRange(r);}catch(e){}}
+function makeEditable(el,lsKey){
+if(!el)return;
+el.contentEditable='true';
+el.onfocus=function(){el.classList.add('editando');setTimeout(()=>selectAll(el),0);};
+el.onkeydown=function(e){if(e.key==='Enter'){e.preventDefault();el.blur();}};
+el.onblur=function(){
+el.classList.remove('editando');
+let v=el.textContent.trim();
+if(v===''||v==='0')return;
+lsSet(lsKey,v);
+renderAlt();
+};
+}
+function renderAlt(){
+let tb=document.getElementById('alt-table');
+tb.innerHTML='<tr><th>Servicio</th><th>Ult km</th><th>Ult fecha</th><th>Int km</th><th>Prox km</th><th>Prox fecha</th><th>Meses</th><th>Estado</th><th>Falta km</th><th>Falta m</th><th>Mant</th><th>Rep OK</th></tr>';
+alertas.forEach(a=>{
+let mUltF=lsGet('alt_ultF_'+a.row);
+let mIntKm=lsGet('alt_intKm_'+a.row);
+let mMeses=lsGet('alt_meses_'+a.row);
+let ultF=mUltF!==null?mUltF:a.ultF;
+let intKm=mIntKm!==null?mIntKm:a.intKm;
+let meses=mMeses!==null?mMeses:a.meses;
+let fkCls=a.faltaKm<0?'neg':'';
+let fmCls=a.faltaM<0?'neg':'';
+let tr=document.createElement('tr');
+tr.innerHTML=
+ '<td><b>'+a.svc+'</b></td>'
++'<td>'+a.ultKm.toLocaleString()+'</td>'
++'<td><span class="editable" id="eUF'+a.row+'">'+(ultF||'—')+'</span>'+(mUltF?'<span class="mod-star">*</span>':'')+'</td>'
++'<td><span class="editable" id="eIK'+a.row+'">'+Number(intKm).toLocaleString()+'</span>'+(mIntKm?'<span class="mod-star">*</span>':'')+'</td>'
++'<td>'+a.proxKm.toLocaleString()+'</td>'
++'<td>'+(a.proxF||'—')+'</td>'
++'<td><span class="editable" id="eMS'+a.row+'">'+meses+'</span>'+(mMeses?'<span class="mod-star">*</span>':'')+'</td>'
++'<td><span class="'+stClass(a.estado)+'">' +a.estado+'</span></td>'
++'<td class="'+fkCls+'">'+a.faltaKm.toLocaleString()+'</td>'
++'<td class="'+fmCls+'">'+a.faltaM+'</td>'
++'<td>'+(a.mant||'—')+'</td>'
++'<td>'+(a.repOk||'—')+'</td>';
+tb.appendChild(tr);
+makeEditable(document.getElementById('eUF'+a.row),'alt_ultF_'+a.row);
+makeEditable(document.getElementById('eIK'+a.row),'alt_intKm_'+a.row);
+makeEditable(document.getElementById('eMS'+a.row),'alt_meses_'+a.row);
+});
+}
+function renderHist(){
+let q=document.getElementById('buscar').value.toLowerCase();
+let cat=document.getElementById('filtCat').value;
+let sort=document.getElementById('sortDir').value;
+let newRecs=JSON.parse(lsGet('hist_new')||'[]');
+let all=[...historial,...newRecs];
+let filtered=all.filter(r=>{
+let mq=!q||(r.d.toLowerCase().includes(q)||String(r.km).includes(q)||(r.n||'').toLowerCase().includes(q));
+let mc=!cat||r.c===cat;
+return mq&&mc;
+});
+filtered.sort((a,b)=>sort==='asc'?a.km-b.km:b.km-a.km);
+let tb=document.getElementById('hist-body');tb.innerHTML='';
+filtered.forEach(r=>{
+let tr=document.createElement('tr');
+if(r._new)tr.className='tr-new';
+tr.innerHTML='<td style="text-align:right;white-space:nowrap">'
++(r.km?r.km.toLocaleString():'—')+'</td>'
++'<td style="white-space:nowrap">'+(r.f||'')+'</td>'
++'<td><span class="badge '+catClass(r.c)+'">'+(r.c||'')+'</span></td>'
++'<td>'+(r.d||'')+(r._new?' <span class="mod-star">nuevo</span>':'')+'</td>'
++'<td>'+(r.n||'')+'</td>';
+tb.appendChild(tr);
+});
+}
+function toggleAddForm(){
+let f=document.getElementById('add-form');
+f.classList.toggle('open');
+if(f.classList.contains('open'))document.getElementById('f-km').focus();
+}
+function agregarRegistro(){
+let km=parseInt(document.getElementById('f-km').value)||0;
+let fd=document.getElementById('f-fecha').value;
+let fecha='';
+if(fd){let p=fd.split('-');fecha=p[2]+'/'+p[1]+'/'+p[0];}
+let cat=document.getElementById('f-cat').value;
+let desc=document.getElementById('f-desc').value.trim();
+let notas=document.getElementById('f-notas').value.trim();
+if(!desc){alert('Ingresa una descripcion');return;}
+let recs=JSON.parse(lsGet('hist_new')||'[]');
+recs.push({km:km,f:fecha,c:cat,d:desc,n:notas,_new:true});
+lsSet('hist_new',JSON.stringify(recs));
+document.getElementById('f-km').value='';
+document.getElementById('f-fecha').value='';
+document.getElementById('f-desc').value='';
+document.getElementById('f-notas').value='';
+toggleAddForm();
+renderHist();
+}
+function exportarJSON(){
+let exp={version:htmlVersion,alertas_mod:[],hist_new:[]};
+alertas.forEach(a=>{
+let mUltF=lsGet('alt_ultF_'+a.row);
+let mIntKm=lsGet('alt_intKm_'+a.row);
+let mMeses=lsGet('alt_meses_'+a.row);
+if(mUltF!==null||mIntKm!==null||mMeses!==null){
+exp.alertas_mod.push({row:a.row,svc:a.svc,
+ultF:mUltF,intKm:mIntKm!==null?parseInt(mIntKm):null,meses:mMeses!==null?parseInt(mMeses):null});}
+});
+exp.hist_new=JSON.parse(lsGet('hist_new')||'[]');
+let blob=new Blob([JSON.stringify(exp,null,2)],{type:'application/json'});
+let a=document.createElement('a');a.href=URL.createObjectURL(blob);
+a.download='mant_feedback.json';a.click();
+}
+function resetMods(){
+if(!confirm('Borrar todos los cambios locales?'))return;
+lsClear();lsSet('htmlVersion',htmlVersion);
+renderAlt();renderHist();
+}
+var rotando=false;
+function toggleRotacion(){
+rotando=!rotando;
+var inner=document.getElementById('alt-wrap-inner');
+var btn=document.getElementById('btn-rot');
+if(rotando){
+showTab('alt');
+var ancho=window.innerWidth;
+var alto=window.innerHeight;
+document.querySelector('.topbar').style.display='none';
+document.querySelector('.tabs').style.display='none';
+inner.style.cssText='position:fixed;top:0;left:0;width:'+alto+'px;height:'+ancho+'px;transform:rotate(90deg) translateY(-'+ancho+'px);transform-origin:top left;overflow:auto;background:#0d0d0d;padding:6px;z-index:100';
+document.body.style.overflow='hidden';
+btn.innerHTML='&#8634;';
+}else{
+document.querySelector('.topbar').style.display='';
+document.querySelector('.tabs').style.display='';
+inner.style.cssText='';
+document.body.style.overflow='';
+btn.innerHTML='&#8635;';
+}}
+window.onload=function(){
+if(lsGet('htmlVersion')!==htmlVersion){lsClear();lsSet('htmlVersion',htmlVersion);}
+renderAlt();renderHist();
+};
+</script></body></html>
